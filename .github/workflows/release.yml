@@ -23,7 +23,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v5.1.0
+      - uses: docker/build-push-action@v7.3.0
         with:
           tags: ghcr.io/authentik-labs/mewp:latest
           push: ${{ github.ref == 'refs/heads/main' }}
