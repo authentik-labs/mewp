@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   lint:
-    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -37,7 +36,12 @@ jobs:
           go-version-file: go.mod
           cache: true
       - run: |
-          go test ./...
+          go test \
+            -covermode=atomic \
+            -coverprofile=${PWD}/coverage.txt \
+            -json \
+            ./... | tee test-output
+          go tool github.com/jstemmer/go-junit-report/v2 -parser gojson -in test-output -out ${PWD}/junit.xml
       - if: ${{ always() }}
         uses: test-summary/action@37b508cfee6d4d080eedd00b5bb240a6a784a6a5 # v2
         with:
