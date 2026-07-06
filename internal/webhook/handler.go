@@ -45,6 +45,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	eventType := r.Header.Get("X-GitHub-Event")
+	s.logger.Info("webhook received", "event", eventType, "delivery", r.Header.Get("X-GitHub-Delivery"), "remote_addr", r.RemoteAddr)
 	switch eventType {
 	case "pull_request":
 		var event PullRequestEvent
@@ -74,6 +75,7 @@ func (s *Server) dispatchPullRequestEvent(event *PullRequestEvent) {
 	owner := event.Repository.Owner.Login
 	repo := event.Repository.Name
 
+	s.logger.Info("pull_request", "action", event.Action, "repo", owner+"/"+repo, "pr", pr.Number, "title", pr.Title)
 	switch event.Action {
 	case "closed":
 		if !pr.Merged {
@@ -118,6 +120,9 @@ func (s *Server) dispatchPullRequestEvent(event *PullRequestEvent) {
 // dispatchIssueEvent handles issues.labeled events. GitHub fires these instead of
 // pull_request.labeled when a label is added to a PR from an external fork.
 func (s *Server) dispatchIssueEvent(event *IssueEvent) {
+	owner := event.Repository.Owner.Login
+	repo := event.Repository.Name
+	s.logger.Info("issues", "action", event.Action, "repo", owner+"/"+repo, "issue", event.Issue.Number)
 	if event.Action != "labeled" || event.Issue.PullRequest == nil || event.Label == nil {
 		return
 	}
@@ -127,8 +132,6 @@ func (s *Server) dispatchIssueEvent(event *IssueEvent) {
 	}
 
 	installationID := event.Installation.ID
-	owner := event.Repository.Owner.Login
-	repo := event.Repository.Name
 	issueNumber := event.Issue.Number
 	targetBranch := m[1]
 

@@ -19,7 +19,7 @@ spec:
         runAsUser: 10001
       containers:
         - name: cherry-pick-svc
-          image: ghcr.io/goauthentik/cherry-pick-svc:latest
+          image: ghcr.io/authentik-labs/cherry-pick-svc:latest
           ports:
             - name: http
               containerPort: 8080

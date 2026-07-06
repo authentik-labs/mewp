@@ -90,16 +90,21 @@ func runGit(ctx context.Context, dir string, args ...string) (string, error) {
 }
 
 func redactToken(s string) string {
+	const prefix = "https://x-access-token:"
+	const redacted = "https://x-access-token:***"
+	offset := 0
 	for {
-		start := strings.Index(s, "https://x-access-token:")
-		if start == -1 {
+		idx := strings.Index(s[offset:], prefix)
+		if idx == -1 {
 			break
 		}
-		end := strings.Index(s[start:], "@")
-		if end == -1 {
+		start := offset + idx
+		atIdx := strings.Index(s[start+len(prefix):], "@")
+		if atIdx == -1 {
 			break
 		}
-		s = s[:start] + "https://x-access-token:***" + s[start+end:]
+		s = s[:start] + redacted + s[start+len(prefix)+atIdx:]
+		offset = start + len(redacted)
 	}
 	return s
 }

@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /cherry-pick-svc ./cmd
 FROM docker.io/debian:trixie-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git ca-certificates && \
-    rm -rf /var/lib/apt/lists/* \
+    rm -rf /var/lib/apt/lists/* && \
     useradd --system --uid 10001 appuser
 USER appuser
 COPY --from=builder /cherry-pick-svc /usr/local/bin/cherry-pick-svc

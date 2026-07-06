@@ -34,7 +34,12 @@ func ResolveAppGitIdentity(ctx context.Context, cfg *config.Config) error {
 	botUsername := app.GetSlug() + "[bot]"
 
 	// GET /users/<slug>[bot] — the bot user has a stable numeric ID used in the email.
-	user, _, err := appClient.Users.Get(ctx, botUsername)
+	// Use an unauthenticated client: /users is public and GitHub rejects App JWTs there.
+	anonClient, err := github.NewClient(github.WithHTTPClient(http.DefaultClient))
+	if err != nil {
+		return fmt.Errorf("create anon client: %w", err)
+	}
+	user, _, err := anonClient.Users.Get(ctx, botUsername)
 	if err != nil {
 		return fmt.Errorf("get bot user %q: %w", botUsername, err)
 	}
