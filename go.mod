@@ -1,4 +1,4 @@
-module goauthentik.io/cherry-pick-svc
+module github.com/authentik-labs/mewp
 
 go 1.26.3
 

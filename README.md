@@ -1,4 +1,4 @@
-# cherry-pick-svc
+# mewp
 
 Automatically creates backport pull requests when a `backport/<branch>` label is added to a merged PR.
 
@@ -71,8 +71,8 @@ go run ./cmd/server
 **Docker:**
 
 ```bash
-docker build -t cherry-pick-svc .
-docker run -p 8080:8080 --env-file .env cherry-pick-svc
+docker build -t mewp .
+docker run -p 8080:8080 --env-file .env mewp
 ```
 
 **Kubernetes:**
@@ -80,7 +80,7 @@ docker run -p 8080:8080 --env-file .env cherry-pick-svc
 Create the secret first:
 
 ```bash
-kubectl create secret generic cherry-pick-svc-secret \
+kubectl create secret generic mewp-secret \
   --from-literal=github-app-id=<app-id> \
   --from-file=github-app-private-key=private-key.pem \
   --from-literal=webhook-secret=<webhook-secret>

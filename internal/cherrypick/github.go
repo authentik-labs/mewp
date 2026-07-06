@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/authentik-labs/mewp/internal/config"
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v88/github"
-	"goauthentik.io/cherry-pick-svc/internal/config"
 )
 
 // ResolveAppGitIdentity fetches the GitHub App's slug and bot user ID, then sets

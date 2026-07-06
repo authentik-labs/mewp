@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"goauthentik.io/cherry-pick-svc/internal/config"
+	"github.com/authentik-labs/mewp/internal/config"
 )
 
 func TestBuildPRBody(t *testing.T) {

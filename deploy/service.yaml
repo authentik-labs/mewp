@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cherry-pick-svc
+  name: mewp
   labels:
-    app.kubernetes.io/name: cherry-pick-svc
+    app.kubernetes.io/name: mewp
 spec:
   selector:
-    app.kubernetes.io/name: cherry-pick-svc
+    app.kubernetes.io/name: mewp
   ports:
     - name: http
       port: 80

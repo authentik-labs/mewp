@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"goauthentik.io/cherry-pick-svc/internal/cherrypick"
-	"goauthentik.io/cherry-pick-svc/internal/config"
-	"goauthentik.io/cherry-pick-svc/internal/webhook"
+	"github.com/authentik-labs/mewp/internal/cherrypick"
+	"github.com/authentik-labs/mewp/internal/config"
+	"github.com/authentik-labs/mewp/internal/webhook"
 )
 
 func main() {

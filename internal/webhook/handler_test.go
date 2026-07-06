@@ -10,7 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"goauthentik.io/cherry-pick-svc/internal/config"
+	"github.com/authentik-labs/mewp/internal/config"
 )
 
 func signBody(secret, body string) string {
@@ -133,13 +133,13 @@ func TestServeHTTP(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name: "pull_request closed not merged",
-			req: makeReq("pull_request", `{"action":"closed","pull_request":{"merged":false},"repository":{"name":"r","owner":{"login":"o"}},"installation":{"id":1}}`),
+			name:       "pull_request closed not merged",
+			req:        makeReq("pull_request", `{"action":"closed","pull_request":{"merged":false},"repository":{"name":"r","owner":{"login":"o"}},"installation":{"id":1}}`),
 			wantStatus: http.StatusOK,
 		},
 		{
-			name: "issues not labeled action",
-			req: makeReq("issues", `{"action":"opened","issue":{"number":1,"pull_request":{"url":"u"}},"repository":{"name":"r","owner":{"login":"o"}},"installation":{"id":1}}`),
+			name:       "issues not labeled action",
+			req:        makeReq("issues", `{"action":"opened","issue":{"number":1,"pull_request":{"url":"u"}},"repository":{"name":"r","owner":{"login":"o"}},"installation":{"id":1}}`),
 			wantStatus: http.StatusOK,
 		},
 	}

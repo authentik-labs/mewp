@@ -13,8 +13,8 @@ import (
 	"regexp"
 	"sync"
 
-	"goauthentik.io/cherry-pick-svc/internal/cherrypick"
-	"goauthentik.io/cherry-pick-svc/internal/config"
+	"github.com/authentik-labs/mewp/internal/cherrypick"
+	"github.com/authentik-labs/mewp/internal/config"
 )
 
 var backportLabelRe = regexp.MustCompile(`^backport/(.+)$`)

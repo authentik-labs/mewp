@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"os"
 
-	"goauthentik.io/cherry-pick-svc/internal/config"
-	"goauthentik.io/cherry-pick-svc/internal/gitops"
+	"github.com/authentik-labs/mewp/internal/config"
+	"github.com/authentik-labs/mewp/internal/gitops"
 )
 
 type Job struct {

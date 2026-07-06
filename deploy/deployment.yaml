@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cherry-pick-svc
+  name: mewp
   labels:
-    app.kubernetes.io/name: cherry-pick-svc
+    app.kubernetes.io/name: mewp
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: cherry-pick-svc
+      app.kubernetes.io/name: mewp
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: cherry-pick-svc
+        app.kubernetes.io/name: mewp
     spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
       containers:
-        - name: cherry-pick-svc
-          image: ghcr.io/authentik-labs/cherry-pick-svc:latest
+        - name: mewp
+          image: ghcr.io/authentik-labs/mewp:latest
           ports:
             - name: http
               containerPort: 8080
@@ -32,17 +32,17 @@ spec:
             - name: GITHUB_APP_ID
               valueFrom:
                 secretKeyRef:
-                  name: cherry-pick-svc-secret
+                  name: mewp-secret
                   key: github-app-id
             - name: GITHUB_APP_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: cherry-pick-svc-secret
+                  name: mewp-secret
                   key: github-app-private-key
             - name: WEBHOOK_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: cherry-pick-svc-secret
+                  name: mewp-secret
                   key: webhook-secret
           livenessProbe:
             httpGet:

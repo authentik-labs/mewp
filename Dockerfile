@@ -4,7 +4,7 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /cherry-pick-svc ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /mewp ./cmd/server
 
 FROM docker.io/debian:trixie-slim
 RUN apt-get update && \
@@ -12,6 +12,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     useradd --system --uid 10001 appuser
 USER appuser
-COPY --from=builder /cherry-pick-svc /usr/local/bin/cherry-pick-svc
+COPY --from=builder /mewp /usr/local/bin/mewp
 EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/cherry-pick-svc"]
+ENTRYPOINT ["/usr/local/bin/mewp"]
