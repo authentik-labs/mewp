@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cherry-pick-svc
+  labels:
+    app.kubernetes.io/name: cherry-pick-svc
+spec:
+  selector:
+    app.kubernetes.io/name: cherry-pick-svc
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

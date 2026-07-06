@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cherry-pick-svc
+  labels:
+    app.kubernetes.io/name: cherry-pick-svc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cherry-pick-svc
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cherry-pick-svc
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: cherry-pick-svc
+          image: ghcr.io/goauthentik/cherry-pick-svc:latest
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: LISTEN_ADDR
+              value: ":8080"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: GITHUB_APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: cherry-pick-svc-secret
+                  key: github-app-id
+            - name: GITHUB_APP_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cherry-pick-svc-secret
+                  key: github-app-private-key
+            - name: WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cherry-pick-svc-secret
+                  key: webhook-secret
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            # git and os.MkdirTemp write to /tmp; mount an emptyDir there if you
+            # want readOnlyRootFilesystem: true.
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
