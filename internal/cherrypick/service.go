@@ -93,7 +93,12 @@ func (j *Job) Process(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		err := os.RemoveAll(tmpDir)
+		if err != nil {
+			j.logger.Warn("failed to remove tmp dir", "err", err)
+		}
+	}()
 
 	cloneURL := fmt.Sprintf("https://x-access-token:%s@github.com/%s/%s.git", token, j.Owner, j.Repo)
 
