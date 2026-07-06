@@ -1,0 +1,57 @@
+name: test
+on:
+  push:
+    branches:
+      - main
+      - version-*
+  pull_request:
+  schedule:
+    - cron: "0 13 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v5
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v8
+  test:
+    name: Acceptance tests - authentik ${{ matrix.authentik_version }} - Terraform ${{ matrix.terraform }}
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed for checkout
+      contents: read
+      # Needed for codecov OIDC token
+      id-token: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v5
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: |
+          go test ./...
+      - if: ${{ always() }}
+        uses: test-summary/action@37b508cfee6d4d080eedd00b5bb240a6a784a6a5 # v2
+        with:
+          paths: junit.xml
+          show: "fail"
+      - if: ${{ always() }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v5
+        with:
+          flags: authentik-${{ matrix.authentik_version }}
+          use_oidc: true
+      - if: ${{ always() }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v5
+        with:
+          flags: authentik-${{ matrix.authentik_version }}
+          use_oidc: true
+          report_type: test_results

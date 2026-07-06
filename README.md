@@ -1,4 +1,6 @@
-# mewp
+# MEWP
+
+(MEWP as in Mobile Elevating Work Platform as in cherry-picker)
 
 Automatically creates backport pull requests when a `backport/<branch>` label is added to a merged PR.
 
