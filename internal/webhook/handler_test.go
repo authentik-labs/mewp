@@ -13,6 +13,47 @@ import (
 	"github.com/authentik-labs/mewp/internal/config"
 )
 
+func TestBodySizeLimit(t *testing.T) {
+	const secret = "s3cr3t"
+	// One byte over the limit — MaxBytesReader should cause verifySignature to error.
+	body := bytes.Repeat([]byte("x"), maxRequestBodyBytes+1)
+	sig := signBody(secret, string(body))
+
+	req := httptest.NewRequest(http.MethodPost, "/webhook", bytes.NewReader(body))
+	req.Header.Set("X-Hub-Signature-256", sig)
+	req.Header.Set("X-GitHub-Event", "ping")
+
+	s := newTestServer(secret)
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Errorf("expected oversized body to be rejected, got 200")
+	}
+}
+
+func TestSemaphoreDropsWhenFull(t *testing.T) {
+	s := newTestServer("secret")
+	// Fill the semaphore completely so the next job has no slot.
+	for i := 0; i < maxConcurrentJobs; i++ {
+		s.sem <- struct{}{}
+	}
+
+	event := &PullRequestEvent{
+		Action: "closed",
+		PullRequest: PullRequest{
+			Merged: true,
+			Labels: []Label{{Name: "backport/v1"}},
+			MergeCommitSHA: "abc123",
+		},
+		Repository:   Repository{Name: "repo", Owner: RepoOwner{Login: "owner"}},
+		Installation: Installation{ID: 1},
+	}
+	s.dispatchPullRequestEvent(event)
+	// WaitAll must return — the goroutine must have been dropped, not blocked.
+	s.WaitAll()
+}
+
 func signBody(secret, body string) string {
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(body))

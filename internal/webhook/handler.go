@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"regexp"
 	"sync"
+	"time"
 
 	"github.com/authentik-labs/mewp/internal/cherrypick"
 	"github.com/authentik-labs/mewp/internal/config"
@@ -19,14 +20,21 @@ import (
 
 var backportLabelRe = regexp.MustCompile(`^backport/(.+)$`)
 
+const (
+	maxRequestBodyBytes = 5 * 1024 * 1024 // 5 MB — generous for any real GitHub webhook
+	maxConcurrentJobs   = 10
+	jobTimeout          = 10 * time.Minute
+)
+
 type Server struct {
 	cfg    *config.Config
 	logger *slog.Logger
 	wg     sync.WaitGroup
+	sem    chan struct{}
 }
 
 func NewServer(cfg *config.Config, logger *slog.Logger) *Server {
-	return &Server{cfg: cfg, logger: logger}
+	return &Server{cfg: cfg, logger: logger, sem: make(chan struct{}, maxConcurrentJobs)}
 }
 
 // WaitAll blocks until all in-flight cherry-pick goroutines have finished.
@@ -37,6 +45,7 @@ func (s *Server) WaitAll() {
 
 // ServeHTTP implements http.Handler for POST /webhook.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
 	body, err := verifySignature(s.cfg.WebhookSecret, r)
 	if err != nil {
 		s.logger.Warn("signature verification failed", "err", err, "remote_addr", r.RemoteAddr)
@@ -91,7 +100,16 @@ func (s *Server) dispatchPullRequestEvent(event *PullRequestEvent) {
 			s.wg.Add(1)
 			go func(j *cherrypick.Job) {
 				defer s.wg.Done()
-				if err := j.Process(context.Background()); err != nil {
+				select {
+				case s.sem <- struct{}{}:
+				default:
+					s.logger.Warn("cherry-pick job queue full, dropping", "pr", j.PRNumber, "target", j.TargetBranch)
+					return
+				}
+				defer func() { <-s.sem }()
+				ctx, cancel := context.WithTimeout(context.Background(), jobTimeout)
+				defer cancel()
+				if err := j.Process(ctx); err != nil {
 					s.logger.Error("cherry-pick failed", "pr", j.PRNumber, "target", j.TargetBranch, "err", err)
 				}
 			}(job)
@@ -110,7 +128,16 @@ func (s *Server) dispatchPullRequestEvent(event *PullRequestEvent) {
 		s.wg.Add(1)
 		go func(j *cherrypick.Job) {
 			defer s.wg.Done()
-			if err := j.Process(context.Background()); err != nil {
+			select {
+			case s.sem <- struct{}{}:
+			default:
+				s.logger.Warn("cherry-pick job queue full, dropping", "pr", j.PRNumber, "target", j.TargetBranch)
+				return
+			}
+			defer func() { <-s.sem }()
+			ctx, cancel := context.WithTimeout(context.Background(), jobTimeout)
+			defer cancel()
+			if err := j.Process(ctx); err != nil {
 				s.logger.Error("cherry-pick failed", "pr", j.PRNumber, "target", j.TargetBranch, "err", err)
 			}
 		}(job)
@@ -138,7 +165,16 @@ func (s *Server) dispatchIssueEvent(event *IssueEvent) {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		err := cherrypick.ProcessIssueLabel(context.Background(), s.cfg, s.logger,
+		select {
+		case s.sem <- struct{}{}:
+		default:
+			s.logger.Warn("cherry-pick job queue full, dropping", "issue", issueNumber, "target", targetBranch)
+			return
+		}
+		defer func() { <-s.sem }()
+		ctx, cancel := context.WithTimeout(context.Background(), jobTimeout)
+		defer cancel()
+		err := cherrypick.ProcessIssueLabel(ctx, s.cfg, s.logger,
 			installationID, owner, repo, issueNumber, targetBranch)
 		if err != nil {
 			s.logger.Error("issue backport failed", "issue", issueNumber, "target", targetBranch, "err", err)
