@@ -146,7 +146,10 @@ func (j *Job) Process(ctx context.Context) error {
 	}
 
 	if err := gitops.Push(ctx, tmpDir, cherryPickBranch); err != nil {
-		return fmt.Errorf("push: %w", err)
+		j.logger.Warn("push failed", "err", err)
+		_ = commentOnPR(ctx, client, j.Owner, j.Repo, j.PRNumber,
+			fmt.Sprintf("⚠️ Cherry-pick to `%s` failed during push:\n\n```\n%s\n```", j.TargetBranch, err))
+		return nil
 	}
 
 	title := fmt.Sprintf("%s (cherry-pick #%d to %s)", j.PRTitle, j.PRNumber, j.TargetBranch)
