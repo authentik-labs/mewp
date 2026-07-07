@@ -5,10 +5,24 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/authentik-labs/mewp/internal/config"
 	"github.com/authentik-labs/mewp/internal/gitops"
 )
+
+var validBranchRe = regexp.MustCompile(`^[a-zA-Z0-9._/\-]+$`)
+
+func validateTargetBranch(branch string) error {
+	if strings.HasPrefix(branch, "-") {
+		return fmt.Errorf("invalid target branch %q: must not start with '-'", branch)
+	}
+	if !validBranchRe.MatchString(branch) {
+		return fmt.Errorf("invalid target branch %q: must match [a-zA-Z0-9._/-]+", branch)
+	}
+	return nil
+}
 
 type Job struct {
 	InstallationID int64
@@ -57,6 +71,9 @@ func ProcessIssueLabel(ctx context.Context, cfg *config.Config, logger *slog.Log
 }
 
 func (j *Job) Process(ctx context.Context) error {
+	if err := validateTargetBranch(j.TargetBranch); err != nil {
+		return err
+	}
 	token, err := getInstallationToken(ctx, j.cfg, j.InstallationID)
 	if err != nil {
 		return fmt.Errorf("get installation token: %w", err)
